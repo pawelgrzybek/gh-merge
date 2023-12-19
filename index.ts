@@ -11,5 +11,16 @@ Deno.serve(async (req) => {
     console.log("Body:", body);
   }
 
-  return new Response("Hello, World!");
+  return new Response(
+    JSON.stringify({
+      url_pathname: url.pathname,
+      url_search_params: url.searchParams,
+      url_host: url.host,
+    }),
+    {
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+      },
+    },
+  );
 });
