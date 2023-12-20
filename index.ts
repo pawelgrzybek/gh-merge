@@ -60,9 +60,17 @@ const HANDLER_MAPPER = {
   DELETE: handlerDelete,
 };
 
-Deno.serve(async (request) =>
-  await HANDLER_MAPPER[request.method as keyof typeof HANDLER_MAPPER](
+Deno.serve(async (request) => {
+  const auth = request.headers.get("Authorization");
+
+  if (auth !== `Bearer ${Deno.env.get("GH_MERGE_API_KEY")}`) {
+    return Response.json({
+      nice: "try",
+    });
+  }
+
+  return await HANDLER_MAPPER[request.method as keyof typeof HANDLER_MAPPER](
     request,
     kv,
-  )
-);
+  );
+});
