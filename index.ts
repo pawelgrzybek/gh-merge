@@ -39,7 +39,7 @@ kv.listenQueue(async (event) => {
       [PREFIX, event.owner, event.repo, event.pull_number],
     );
 
-    await fetch(
+    const gh_response = await fetch(
       `https://api.github.com/repos/${event.owner}/${event.repo}/pulls/${event.pull_number}/merge`,
       {
         method: "PUT",
@@ -47,6 +47,8 @@ kv.listenQueue(async (event) => {
         body,
       },
     );
+
+    console.log(gh_response);
   } catch (e) {
     console.error(e);
   }
