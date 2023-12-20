@@ -1,26 +1,51 @@
-Deno.serve(async (req) => {
-  console.log("Method:", req.method);
+const kv = await Deno.openKv();
 
-  const url = new URL(req.url);
-  console.log("Path:", url.pathname);
-  console.log("Query parameters:", url.searchParams);
-  console.log("Headers:", req.headers);
+interface Entry {
+  "owner": string;
+  "repo": string;
+  "pull_number": number;
+  "schedule": string;
+}
 
-  if (req.body) {
-    const body = await req.text();
-    console.log("Body:", body);
-  }
+const PREFIX = "gh-merge";
 
-  return new Response(
-    JSON.stringify({
-      url_pathname: url.pathname,
-      url_search_params: url.searchParams,
-      url_host: url.host,
-    }),
-    {
-      headers: {
-        "content-type": "application/json; charset=utf-8",
-      },
-    },
+const handlerGet = async (request: Request, kv: Deno.Kv) => {
+  const entries = kv.list<Entry>({
+    prefix: [PREFIX],
+  });
+  const response = await Array.fromAsync(entries);
+
+  return Response.json(response);
+};
+
+const handlerPost = async (request: Request, kv: Deno.Kv) => {
+  const body: Entry = await request.json();
+  await kv.set(
+    [PREFIX, body.owner, body.repo, body.pull_number],
+    body.schedule,
   );
-});
+
+  return Response.json(body);
+};
+
+const handlerDelete = async (request: Request, kv: Deno.Kv) => {
+  const body: Entry = await request.json();
+  await kv.delete(
+    [PREFIX, body.owner, body.repo, body.pull_number],
+  );
+
+  return Response.json(body);
+};
+
+const HANDLER_MAPPER = {
+  GET: handlerGet,
+  POST: handlerPost,
+  DELETE: handlerDelete,
+};
+
+Deno.serve(async (request) =>
+  await HANDLER_MAPPER[request.method as keyof typeof HANDLER_MAPPER](
+    request,
+    kv,
+  )
+);
