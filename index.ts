@@ -1,41 +1,56 @@
+import { PREFIX } from "./constants.ts";
+import { isEntry } from "./helpers.ts";
+import handlerDelete from "./handlerDelete.ts";
+import handlerPost from "./handlerPost.ts";
+import handlerGet from "./handelerGet.ts";
+
 const kv = await Deno.openKv();
 
-interface Entry {
-  "owner": string;
-  "repo": string;
-  "pull_number": number;
-  "schedule": string;
-}
+kv.listenQueue(async (event) => {
+  if (!isEntry(event)) {
+    console.error("Not an entry.");
+    return;
+  }
 
-const PREFIX = "gh-merge";
+  const entry = await kv.get<string>([
+    PREFIX,
+    event.owner,
+    event.repo,
+    event.pull_number,
+  ]);
 
-const handlerGet = async (request: Request, kv: Deno.Kv) => {
-  const entries = kv.list<Entry>({
-    prefix: [PREFIX],
+  if (entry.value !== event.schedule) {
+    console.log("Entry has been updated or deleted.");
+    return;
+  }
+
+  const headers = new Headers({
+    "Accept": "application/vnd.github+json",
+    "Authorization": `Bearer ${Deno.env.get("GH_MERGE_GITHUB_TOKEN")}`,
+    "X-GitHub-Api-Version": "2022-11-28",
   });
-  const response = await Array.fromAsync(entries);
+  const body = JSON.stringify({
+    commit_title: "✨ Automated merge title by the Deno gh-merge",
+    commit_message: "✨ Automated merge message by the Deno gh-merge",
+  });
 
-  return Response.json(response);
-};
+  try {
+    await kv.delete(
+      [PREFIX, event.owner, event.repo, event.pull_number],
+    );
 
-const handlerPost = async (request: Request, kv: Deno.Kv) => {
-  const body: Entry = await request.json();
-  await kv.set(
-    [PREFIX, body.owner, body.repo, body.pull_number],
-    body.schedule,
-  );
-
-  return Response.json(body);
-};
-
-const handlerDelete = async (request: Request, kv: Deno.Kv) => {
-  const body: Entry = await request.json();
-  await kv.delete(
-    [PREFIX, body.owner, body.repo, body.pull_number],
-  );
-
-  return Response.json(body);
-};
+    await fetch(
+      `https://api.github.com/repos/${event.owner}/${event.repo}/pulls/${event.pull_number}/merge`,
+      {
+        method: "PUT",
+        headers,
+        body,
+      },
+    );
+  } catch (e) {
+    console.error(e);
+  }
+});
 
 const HANDLER_MAPPER = {
   GET: handlerGet,
