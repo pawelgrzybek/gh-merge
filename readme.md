@@ -17,7 +17,7 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --data '{
 	"owner": "pawelgrzybek",
-	"repo": "gh-merge",
+	"repo": "deno-gh-merge",
 	"pull_number": 1,
 	"schedule": "2023-12-20T16:30:00"
 }'
@@ -32,7 +32,7 @@ curl --request DELETE \
   --header 'Content-Type: application/json' \
   --data '{
 	"owner": "pawelgrzybek",
-	"repo": "gh-merge",
+	"repo": "deno-gh-merge",
 	"pull_number": 1
 }'
 ```
