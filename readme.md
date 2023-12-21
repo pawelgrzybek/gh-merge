@@ -1,4 +1,6 @@
-# Deno gh-merge
+# deno-gh-merge
+
+Schedule a merge of a GitHub pull request using Deno Kv queues.
 
 ## Get the list of scheduled pull request merges
 
