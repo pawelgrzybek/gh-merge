@@ -7,8 +7,12 @@ const handlerPost = async (request: Request, kv: Deno.Kv) => {
   const delay = schedule - now;
 
   if (delay < 0) {
-    console.error("Schedule date should be in the future");
-    return Response.json(body);
+    return Response.json({
+      "status": "error",
+      "statusCode": 400,
+      "data": null,
+      "error": "Schedule date should be a future date.",
+    }, { status: 400 });
   }
 
   await kv.set(
@@ -17,7 +21,12 @@ const handlerPost = async (request: Request, kv: Deno.Kv) => {
   );
   await kv.enqueue(body, { delay });
 
-  return Response.json(body);
+  return Response.json({
+    "status": "success",
+    "statusCode": 200,
+    "data": body,
+    "error": null,
+  }, { status: 200 });
 };
 
 export default handlerPost;

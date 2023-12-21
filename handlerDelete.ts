@@ -6,7 +6,12 @@ const handlerDelete = async (request: Request, kv: Deno.Kv) => {
     [PREFIX, body.owner, body.repo, body.pull_number],
   );
 
-  return Response.json(body);
+  return Response.json({
+    "status": "success",
+    "statusCode": 200,
+    "data": body,
+    "error": null,
+  }, { status: 200 });
 };
 
 export default handlerDelete;

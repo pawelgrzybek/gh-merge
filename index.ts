@@ -39,7 +39,7 @@ kv.listenQueue(async (event) => {
       [PREFIX, event.owner, event.repo, event.pull_number],
     );
 
-    const gh_response = await fetch(
+    await fetch(
       `https://api.github.com/repos/${event.owner}/${event.repo}/pulls/${event.pull_number}/merge`,
       {
         method: "PUT",
@@ -47,8 +47,6 @@ kv.listenQueue(async (event) => {
         body,
       },
     );
-
-    console.log(gh_response);
   } catch (e) {
     console.error(e);
   }
@@ -65,8 +63,11 @@ Deno.serve(async (request) => {
 
   if (auth !== `Bearer ${Deno.env.get("GH_MERGE_API_KEY")}`) {
     return Response.json({
-      nice: "try",
-    });
+      "status": "error",
+      "statusCode": 401,
+      "data": null,
+      "error": "Nice try 👍",
+    }, { status: 401 });
   }
 
   return await HANDLER_MAPPER[request.method as keyof typeof HANDLER_MAPPER](
