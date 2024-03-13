@@ -6,12 +6,15 @@ const handlerGet = async (_request: Request, kv: Deno.Kv) => {
   });
   const response = await Array.fromAsync(entries);
 
-  return Response.json({
-    "status": "success",
-    "statusCode": 200,
-    "data": response,
-    "error": null,
-  }, { status: 200 });
+  return Response.json(
+    {
+      status: "success",
+      statusCode: 200,
+      data: response,
+      error: null,
+    },
+    { status: 200 },
+  );
 };
 
 export default handlerGet;
